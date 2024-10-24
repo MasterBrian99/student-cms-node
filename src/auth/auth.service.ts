@@ -5,12 +5,10 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { PasswordService } from './password.service';
 import { ERROR_MESSAGES } from 'src/utils/error-messages';
-import { LoginAuthDto } from './dto/login-auth.dto';
 import { RoleType } from 'src/utils/role-type';
-import { TokenPayloadDto } from './dto/token-payload.dto';
+import { TokenPayloadDto } from './dto/response/token-payload.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { TokenType } from 'src/utils/token-type';
@@ -18,6 +16,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schema/schemas/user.schema';
 import { Model } from 'mongoose';
 import { STATUS } from 'src/utils/constant';
+import { CreateAuthDto } from './dto/request/create-auth.dto';
+import { LoginAuthDto } from './dto/request/login-auth.dto';
+import { StudentAuthDto } from './dto/request/student-auth.dto';
+import { Student } from 'src/schema/schemas/student.schema';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +29,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Student.name) private studentModel: Model<Student>,
   ) {}
   async register(createAuthDto: CreateAuthDto) {
     const alreadyExist = await this.userModel.findOne({
@@ -44,7 +47,7 @@ export class AuthService {
           createAuthDto.password,
         ),
         status: STATUS.ACTIVE,
-        role: RoleType.USER,
+        role: RoleType.STUDENT,
       });
 
       await user.save();
@@ -100,5 +103,41 @@ export class AuthService {
       email: user.email,
       userId: user._id.toString(),
     };
+  }
+
+  async registerStudent(dto: StudentAuthDto) {
+    const user = await this.userModel.findOne({
+      email: dto.email,
+    });
+    if (user) {
+      throw new ConflictException(ERROR_MESSAGES.USER_ALREADY_EXIST);
+    }
+    try {
+      const user = new this.userModel({
+        email: dto.email,
+        password: await this.passwordService.hashPassword(dto.password),
+        status: STATUS.INACTIVE,
+        role: RoleType.STUDENT,
+      });
+
+      const savedUser = await user.save();
+      // console.log(savedUser);
+      const student = new this.studentModel({
+        email: dto.email,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        status: STATUS.INACTIVE,
+        user: savedUser,
+        phoneNumber: dto.phoneNumber,
+      });
+      await student.save();
+
+      return;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(
+        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

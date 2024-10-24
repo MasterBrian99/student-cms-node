@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { ClsModule } from 'nestjs-cls';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SchemaModule } from './schema/schema.module';
+import { StudentModule } from './student/student.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SchemaModule } from './schema/schema.module';
     AuthModule,
     UserModule,
     SchemaModule,
+    StudentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

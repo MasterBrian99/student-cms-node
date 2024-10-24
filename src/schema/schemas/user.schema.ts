@@ -7,17 +7,15 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ collection: 'users' })
 export class User extends BaseSchema {
-  @Prop(String)
+  @Prop({ required: true, type: String })
   email: string;
   @Prop(String)
   password: string;
 
-  @Prop(String)
-  name: string;
   @Prop({
     type: String,
     required: false,
-    enum: [RoleType.ADMIN, RoleType.USER],
+    enum: [RoleType.ADMIN, RoleType.STUDENT],
   })
   role!: RoleType;
 }
