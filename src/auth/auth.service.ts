@@ -20,6 +20,7 @@ import { CreateAuthDto } from './dto/request/create-auth.dto';
 import { LoginAuthDto } from './dto/request/login-auth.dto';
 import { StudentAuthDto } from './dto/request/student-auth.dto';
 import { Student } from 'src/schema/schemas/student.schema';
+import { TypedEventEmitter } from 'src/event-emitter/typed-event-emitter.class';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Student.name) private studentModel: Model<Student>,
+    private readonly eventEmitter: TypedEventEmitter,
   ) {}
   async register(createAuthDto: CreateAuthDto) {
     const alreadyExist = await this.userModel.findOne({
@@ -130,7 +132,11 @@ export class AuthService {
         user: savedUser,
         phoneNumber: dto.phoneNumber,
       });
-      await student.save();
+      const savedStudent = await student.save();
+      this.eventEmitter.emit('student.welcome', {
+        name: savedStudent.fullName,
+        email: dto.email,
+      });
 
       return;
     } catch (error) {

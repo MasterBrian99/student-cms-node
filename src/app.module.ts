@@ -8,9 +8,13 @@ import { ClsModule } from 'nestjs-cls';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SchemaModule } from './schema/schema.module';
 import { StudentModule } from './student/student.module';
+import { EmailModule } from './email/email.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { TypedEventEmitterModule } from './event-emitter/typed-event-emitter.module';
 
 @Module({
   imports: [
+    TypedEventEmitterModule,
     ClsModule.forRoot({
       global: true,
       middleware: {
@@ -18,6 +22,7 @@ import { StudentModule } from './student/student.module';
       },
     }),
     MongooseModule.forRoot('mongodb://localhost/nest'),
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env`],
@@ -27,6 +32,7 @@ import { StudentModule } from './student/student.module';
     UserModule,
     SchemaModule,
     StudentModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
