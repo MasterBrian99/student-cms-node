@@ -1,26 +1,95 @@
-import { Injectable } from '@nestjs/common';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UpdateStudentDto } from './dto/request/update-student.dto';
+import { ApproveStudentDto } from './dto/request/approve-student.dto';
+import { ConfigService } from '@nestjs/config';
+import { User } from 'src/schema/schemas/user.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Student } from 'src/schema/schemas/student.schema';
+import { TypedEventEmitter } from 'src/event-emitter/typed-event-emitter.class';
+import { ERROR_MESSAGES } from 'src/utils/error-messages';
+import { STATUS, STUDENT_STATUS } from 'src/utils/constant';
+import { GetAllStudentDto } from './dto/request/get-all-student.dto';
+import { ListStudentDto } from './dto/response/list-student.dto';
+import { StudentDto } from './dto/response/student.dto';
 
 @Injectable()
 export class StudentService {
-  create(createStudentDto: CreateStudentDto) {
-    return 'This action adds a new student';
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Student.name) private studentModel: Model<Student>,
+    private readonly eventEmitter: TypedEventEmitter,
+  ) {}
+  async approveStudent(dto: ApproveStudentDto) {
+    const student = await this.studentModel.findOne({
+      _id: dto.id,
+    });
+    if (student.studentStatus === STUDENT_STATUS.APPROVED) {
+      throw new NotFoundException(ERROR_MESSAGES.ALREADY_APPROVED);
+    }
+    const updatedStudent = await this.studentModel.findOneAndUpdate(
+      {
+        _id: student._id,
+      },
+      {
+        $set: {
+          studentStatus: dto.status,
+          status: STATUS.ACTIVE,
+        },
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedStudent) {
+      throw new NotFoundException(`Student with ID ${dto.id} not found.`);
+    }
+    return;
   }
 
-  findAll() {
-    return `This action returns all student`;
+  async findAll(query: GetAllStudentDto) {
+    const studentListQuery = await this.studentModel.find({
+      studentStatus: query.studentStatus,
+    });
+    // console.log(studentList);
+    if (!studentListQuery) {
+      return [];
+    }
+    const listStudent = new Array<ListStudentDto>();
+    studentListQuery.forEach((student) => {
+      listStudent.push({
+        id: student._id.toString(),
+        name: student.fullName,
+        email: student.email,
+        phoneNumber: student.phoneNumber,
+        status: student.status,
+        studentStatus: student.studentStatus,
+      });
+    });
+    return listStudent;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} student`;
+  async getCurrentStudent(user: User) {
+    const student = await this.checkStudent(user);
+    return new StudentDto(student);
   }
+  async update(user: User, updateStudentDto: UpdateStudentDto) {
+    const student = await this.checkStudent(user);
 
-  update(id: number, updateStudentDto: UpdateStudentDto) {
-    return `This action updates a #${id} student`;
+    return `This action updates a # student`;
   }
 
   remove(id: number) {
     return `This action removes a #${id} student`;
+  }
+
+  async checkStudent(user: User) {
+    const student = await this.studentModel.findOne({
+      user: user,
+    });
+    if (!student) {
+      throw new NotFoundException(ERROR_MESSAGES.STUDENT_NOT_FOUND);
+    }
+    return student;
   }
 }

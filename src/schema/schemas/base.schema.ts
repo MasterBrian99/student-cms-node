@@ -9,7 +9,7 @@ export class BaseSchema {
     required: false,
     enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.DELETED],
   })
-  status: string = STATUS.ACTIVE;
+  status: STATUS = STATUS.ACTIVE;
 
   @Prop({ default: now() })
   createdAt: Date;

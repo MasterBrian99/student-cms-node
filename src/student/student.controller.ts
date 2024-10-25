@@ -1,30 +1,101 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+  Query,
+  HttpCode,
+} from '@nestjs/common';
 import { StudentService } from './student.service';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
+import { UpdateStudentDto } from './dto/request/update-student.dto';
+import { ApproveStudentDto } from './dto/request/approve-student.dto';
+import { StandardResponse } from 'src/common/standard-response';
+import { SUCCESS_MESSAGES } from 'src/utils/success-messages';
+import { GetAllStudentDto } from './dto/request/get-all-student.dto';
+import { Auth } from 'src/decorators/http.decorators';
+import { RoleType } from 'src/utils/role-type';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { User } from 'src/schema/schemas/user.schema';
 
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
-  @Post()
-  create(@Body() createStudentDto: CreateStudentDto) {
-    return this.studentService.create(createStudentDto);
+  @HttpCode(HttpStatus.CREATED)
+  @Auth([RoleType.ADMIN], {
+    public: false,
+  })
+  @Post('approve')
+  async approveStudent(@Body() dto: ApproveStudentDto) {
+    try {
+      const data = await this.studentService.approveStudent(dto);
+      return new StandardResponse(
+        HttpStatus.CREATED,
+        SUCCESS_MESSAGES.CHANGE_STUDENT_STATUS,
+        data,
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Auth([RoleType.ADMIN], {
+    public: false,
+  })
   @Get()
-  findAll() {
-    return this.studentService.findAll();
+  async findAll(@Query() query: GetAllStudentDto) {
+    try {
+      const data = await this.studentService.findAll(query);
+      return new StandardResponse(
+        HttpStatus.OK,
+        SUCCESS_MESSAGES.SUCCESS,
+        data,
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.studentService.findOne(+id);
+  @Auth([RoleType.STUDENT], {
+    public: false,
+  })
+  @Get('me')
+  async getCurrentStudent(@AuthUser() user: User) {
+    try {
+      const data = await this.studentService.getCurrentStudent(user);
+      return new StandardResponse(
+        HttpStatus.OK,
+        SUCCESS_MESSAGES.SUCCESS,
+        data,
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
-    return this.studentService.update(+id, updateStudentDto);
+  @Auth([RoleType.STUDENT], {
+    public: false,
+  })
+  @Patch()
+  async update(
+    @AuthUser() user: User,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
+    try {
+      const data = await this.studentService.update(user, updateStudentDto);
+      return new StandardResponse(
+        HttpStatus.OK,
+        SUCCESS_MESSAGES.SUCCESS,
+        data,
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
   @Delete(':id')

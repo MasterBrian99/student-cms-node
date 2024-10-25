@@ -3,3 +3,8 @@ export enum STATUS {
   INACTIVE = 'INACTIVE',
   DELETED = 'DELETED',
 }
+export enum STUDENT_STATUS {
+  APPROVED = 'APPROVED',
+  PENDING = 'PENDING',
+  REJECTED = 'REJECTED',
+}

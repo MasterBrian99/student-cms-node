@@ -15,7 +15,7 @@ import { TokenType } from 'src/utils/token-type';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schema/schemas/user.schema';
 import { Model } from 'mongoose';
-import { STATUS } from 'src/utils/constant';
+import { STATUS, STUDENT_STATUS } from 'src/utils/constant';
 import { CreateAuthDto } from './dto/request/create-auth.dto';
 import { LoginAuthDto } from './dto/request/login-auth.dto';
 import { StudentAuthDto } from './dto/request/student-auth.dto';
@@ -118,7 +118,7 @@ export class AuthService {
       const user = new this.userModel({
         email: dto.email,
         password: await this.passwordService.hashPassword(dto.password),
-        status: STATUS.INACTIVE,
+        status: STATUS.ACTIVE,
         role: RoleType.STUDENT,
       });
 
@@ -131,11 +131,19 @@ export class AuthService {
         status: STATUS.INACTIVE,
         user: savedUser,
         phoneNumber: dto.phoneNumber,
+        studentStatus: STUDENT_STATUS.PENDING,
       });
       const savedStudent = await student.save();
       this.eventEmitter.emit('student.welcome', {
         name: savedStudent.fullName,
         email: dto.email,
+      });
+
+      this.eventEmitter.emit('admin.pending-student', {
+        email: this.configService.get<string>('ADMIN_EMAIL'),
+        name: savedStudent.fullName,
+        student_email: savedStudent.email,
+        phone_number: savedStudent.phoneNumber,
       });
 
       return;
