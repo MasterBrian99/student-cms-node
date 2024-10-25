@@ -50,6 +50,21 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @Post('login-student')
+  async loginStudent(@Body() body: LoginAuthDto) {
+    try {
+      const data = await this.authService.loginStudent(body);
+      return new StandardResponse(
+        HttpStatus.OK,
+        SUCCESS_MESSAGES.SUCCESS,
+        data,
+      );
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   async userLogin(@Body() body: LoginAuthDto) {
     try {

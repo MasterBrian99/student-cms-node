@@ -76,7 +76,25 @@ export class StudentService {
   async update(user: User, updateStudentDto: UpdateStudentDto) {
     const student = await this.checkStudent(user);
 
-    return `This action updates a # student`;
+    const updatedStudent = await this.studentModel.findOneAndUpdate(
+      {
+        _id: student._id,
+      },
+      {
+        $set: {
+          firstName: updateStudentDto.firstName,
+          lastName: updateStudentDto.lastName,
+          phoneNumber: updateStudentDto.phoneNumber,
+        },
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedStudent) {
+      throw new NotFoundException(ERROR_MESSAGES.STUDENT_NOT_FOUND);
+    }
+
+    return;
   }
 
   remove(id: number) {

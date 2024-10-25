@@ -154,4 +154,14 @@ export class AuthService {
       );
     }
   }
+  async loginStudent(body: LoginAuthDto) {
+    const user = await this.validateUser(body);
+    if (user.role !== RoleType.STUDENT) {
+      throw new NotFoundException(ERROR_MESSAGES.STUDENT_NOT_FOUND);
+    }
+    return this.createAccessToken({
+      role: user.role,
+      userId: user._id.toString(),
+    });
+  }
 }
