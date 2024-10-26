@@ -4,8 +4,6 @@ import {
   Post,
   Body,
   Patch,
-  Param,
-  Delete,
   HttpStatus,
   Query,
   HttpCode,
@@ -20,7 +18,9 @@ import { Auth } from 'src/decorators/http.decorators';
 import { RoleType } from 'src/utils/role-type';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { User } from 'src/schema/schemas/user.schema';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('student')
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
@@ -96,10 +96,5 @@ export class StudentController {
     } catch (e) {
       throw e;
     }
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.studentService.remove(+id);
   }
 }

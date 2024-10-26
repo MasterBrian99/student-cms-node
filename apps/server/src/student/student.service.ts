@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateStudentDto } from './dto/request/update-student.dto';
 import { ApproveStudentDto } from './dto/request/approve-student.dto';
-import { ConfigService } from '@nestjs/config';
 import { User } from 'src/schema/schemas/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -16,8 +15,6 @@ import { StudentDto } from './dto/response/student.dto';
 @Injectable()
 export class StudentService {
   constructor(
-    private readonly configService: ConfigService,
-    @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Student.name) private studentModel: Model<Student>,
     private readonly eventEmitter: TypedEventEmitter,
   ) {}
@@ -44,6 +41,18 @@ export class StudentService {
     if (!updatedStudent) {
       throw new NotFoundException(`Student with ID ${dto.id} not found.`);
     }
+    if (dto.status == STUDENT_STATUS.APPROVED) {
+      this.eventEmitter.emit('admin.approve-student', {
+        name: updatedStudent.fullName,
+        email: updatedStudent.email,
+      });
+    } else if (dto.status == STUDENT_STATUS.REJECTED) {
+      this.eventEmitter.emit('admin.reject-student', {
+        name: updatedStudent.fullName,
+        email: updatedStudent.email,
+      });
+    }
+
     return;
   }
 
@@ -95,10 +104,6 @@ export class StudentService {
     }
 
     return;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} student`;
   }
 
   async checkStudent(user: User) {

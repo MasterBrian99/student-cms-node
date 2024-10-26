@@ -64,6 +64,9 @@ export class AuthService {
   }
   async userLogin(body: LoginAuthDto) {
     const user = await this.validateUser(body);
+    if (user.role !== RoleType.ADMIN) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
     return this.createAccessToken({
       role: user.role,
       userId: user._id.toString(),

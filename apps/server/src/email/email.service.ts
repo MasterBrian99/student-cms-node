@@ -38,4 +38,34 @@ export class EmailService {
       },
     });
   }
+  @OnEvent('admin.approve-student')
+  async approveStudent(data) {
+    const { email, name } = data;
+
+    const subject = `Congratulations! Your Account Has Been Approved`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject,
+      template: './approve-mail',
+      context: {
+        name,
+      },
+    });
+  }
+  @OnEvent('admin.reject-student')
+  async rejectStudent(data) {
+    const { email, name } = data;
+
+    const subject = `Registration Update – Account Rejected`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject,
+      template: './reject-mail',
+      context: {
+        name,
+      },
+    });
+  }
 }
